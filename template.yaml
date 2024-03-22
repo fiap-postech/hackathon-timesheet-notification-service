@@ -1,0 +1,84 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  hackathon-timesheet-notification-service
+
+  Sample SAM Template for hackathon-timesheet-notification-service
+  
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 60
+
+Resources:
+  HackathonTimesheetNotificationServiceFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: hackathon-timesheet-notification-service
+      CodeUri: app/
+      Handler: app.handler
+      Runtime: nodejs18.x
+      Architectures:
+        - x86_64
+      Events:
+        HackathonTimeSheetNotificationRequestSQSEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt HackathonTimesheetNotificationRequestSqsQueue.Arn
+            BatchSize: 10
+      Policies:
+        - SQSPollerPolicy:
+            QueueName: !GetAtt HackathonTimesheetNotificationRequestSqsQueue.QueueName
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - 'ses:SendTemplatedEmail'
+              Resource: '*'
+      Environment:
+        Variables:
+          AWS_EXECUTION_REGION: "us-east-1"
+          SES_SOURCE_ADDRESS: "rm349891@fiap.com.br"
+          EMAIL_SUBJECT: "Relatório de registro de ponto"
+          ATTACHMENT_FILE_NAME: "Relatório.pdf"
+  HackathonTimesheetNotificationRequestSqsDeadQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !FindInMap [HackathonTimesheetNotificationRequestSqsDeadQueueName, !Ref Environment, name]
+      VisibilityTimeout: 60
+  HackathonTimesheetNotificationRequestSqsQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !FindInMap [HackathonTimesheetNotificationRequestSqsQueueName, !Ref Environment, name]
+      VisibilityTimeout: 60
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt HackathonTimesheetNotificationRequestSqsDeadQueue.Arn
+        maxReceiveCount: 3
+
+Parameters:
+  Environment:
+    Type: String
+    Default: default
+    AllowedValues:
+      - default
+      - prod
+
+Mappings:
+  HackathonTimesheetNotificationRequestSqsDeadQueueName:
+    default:
+      name: 'local-hackathon-time-sheet-notification-request-dead-queue'
+    prod:
+      name: 'prd-hackathon-time-sheet-notification-request-dead-queue'
+  HackathonTimesheetNotificationRequestSqsQueueName:
+    default:
+      name: 'local-hackathon-time-sheet-notification-request-queue'
+    prod:
+      name: 'prd-hackathon-time-sheet-notification-request-queue'
+
+Outputs:
+  HackathonTimesheetNotificationServiceFunction:
+    Description: "HackathonTimesheetNotification Lambda Function ARN"
+    Value: !GetAtt HackathonTimesheetNotificationServiceFunction.Arn
+  HackathonTimesheetNotificationServiceFunctionIamRole:
+    Description: "Implicit IAM Role created for HackathonTimesheetNotification function"
+    Value: !GetAtt HackathonTimesheetNotificationServiceFunctionRole.Arn
