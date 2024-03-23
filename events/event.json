@@ -3,7 +3,7 @@
     {
       "messageId": "059f36b4-87a3-44ab-83d2-661975830a7d",
       "receiptHandle": "AQEBwJnKyrHigUMZj6rYigCgxlaS3SLy0a...",
-      "body": "{\"bucket\":\"record-reports\",\"key\":\"0000001/ec92c435-3c14-4fe4-b693-ab49f64e2d63.pdf\",\"employeeEmail\":\"schram.giovani@gmail.com\",\"employeeId\":\"0000001\"}",
+      "body": "{\"bucket\":\"record-reports\",\"key\":\"0000001/ec92c435-3c14-4fe4-b693-ab49f64e2d63.pdf\",\"employeeEmail\":\"0000001@test.com\",\"employeeId\":\"0000001\"}",
       "attributes": {
         "ApproximateReceiveCount": "1",
         "SentTimestamp": "1545082649183",
